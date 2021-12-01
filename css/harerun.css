@@ -295,7 +295,7 @@ button > * {
 }
 
 .time-row a > * {
-    vertical-align: bottom;
+    vertical-align: top;
     display: inline-block;
     bottom: 0;
 }

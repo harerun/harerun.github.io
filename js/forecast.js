@@ -51,13 +51,13 @@ function forecast_render() {
             let stream_info = ['<div class="time-row">',
                 app_hyperlink(display_list[i].url),
                 '<div class="text-icon ' + sicon + '">',
-                '</div><span>',
+                '</div>',
                 sdate.getFullYear() + '-'+time_str_minsec(sdate.getMonth()+1)+'-'+time_str_minsec(sdate.getDate())+'  '+
                 '('+app_i18n.day_of_the_week[sdate.getDay()]+') '+ stime[0]+':'+time_str_minsec(stime[1])+'(JST) / '+
                 (stime[0]-1)+':'+time_str_minsec(stime[1])+'(CST)  '+display_list[i].title,
-                '</span></a>',
+                '</a>',
                 '</div>'];
-            forecast_html.push(stream_info.join('\n'));
+            forecast_html.push(stream_info.join(''));
         }
         forecast_html.push('</div>');
     }
@@ -69,7 +69,7 @@ function forecast_render() {
         render_forecast(app_i18n.title_forecast, display_list);
     }
     forecast_html.push('</div>');
-    document.getElementById('forecast').innerHTML = forecast_html.join('\n');
+    document.getElementById('forecast').innerHTML = forecast_html.join('');
 }
 
 function forecast_load_data(callback) {
