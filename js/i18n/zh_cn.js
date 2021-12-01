@@ -1,0 +1,36 @@
+const zh_cn_translate = {
+    translate_name: '中文',
+    brand: '花丸晴琉非官方直播信息站',
+    day_of_the_week: ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'],
+    contacts: ['推特', '油管', 'B站', 'FANBOX'],
+    navbar: ['直播', '日历', '单曲', '歌单', '工具'],
+    navvar_song_list: ['歌单', '单曲一览', '串烧一览', '统计'],
+    song_record_table_title: ['曲名', '最近一次演唱', '演唱次数', '油管演唱次数', 'B站演唱次数'],
+    title_stream: '花丸的全部直播',
+    title_single: '花丸的单曲',
+    title_song_list: '花丸的演唱会歌单',
+    title_song_info: function(n) { return `${n} - 详细信息`; },
+    title_song_medley: function(n) { return `${n} （串烧）`; },
+    title_last_live: '最后一次演唱：',
+    title_sing_total: '直播中演唱次数：',
+    title_sing_youtube: '在油管上演唱次数：',
+    title_sing_bilibili: '在B站上演唱次数：',
+    title_setori_date: '直播日期',
+    title_song_detail_info: '歌曲信息',
+    title_forecast_today: '花丸今天的直播预定',
+    title_forecast: '花丸直播计划表',
+
+    view_setori: '查看当日歌单',
+    sort_ascend: '↑升序',
+    sort_descend: '↓降序',
+
+    search_stream: '搜索全部直播',
+    search_stream_count: function(n) { return `${n} 个结果`; },
+    search_single: '搜索单曲',
+    search_single_count: function(n) { return `${n} 个结果`; },
+    search_song: '搜索曲目',
+    search_song_count: function(n) { return `${n} 个结果`; },
+
+    //Urls.
+    force_bilibili: true,
+}

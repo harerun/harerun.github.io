@@ -1,0 +1,36 @@
+const jp_translate = {
+    translate_name: '日本語',
+    brand: '非公式花丸はれる配信情報サイト',
+    day_of_the_week: ['日曜日', '月曜日', '火曜日', '水曜日', '木曜日', '金曜日', '土曜日'],
+    contacts: ['Twitter', 'Youtube', 'Bilibili', 'FANBOX'],
+    navbar: ['配信', 'カレンダ', 'シングル', 'セトリ', '工具'],
+    navvar_song_list: ['セトリ', '曲', 'メドレ曲', '統計'],
+    song_record_table_title: ['曲名', '最後に歌った日', '全回数', 'Youtubeでの回数', 'Bilibiliでの回数'],
+    title_stream: 'はれるん全ての配信',
+    title_single: 'はれるんのシングル',
+    title_song_list: 'はれちゃんのライブセトリ',
+    title_song_info: function(n) { return `${n} - 詳細情報`; },
+    title_song_medley: function(n) { return `${n} （メドレ）`; },
+    title_last_live: '最後に歌った日：',
+    title_sing_total: '全回数：',
+    title_sing_youtube: 'Youtubeでの回数：',
+    title_sing_bilibili: 'Bilibiliでの回数：',
+    title_setori_date: '配信日',
+    title_song_detail_info: '歌情報',
+    title_forecast_today: '今日のはれるん配信予告',
+    title_forecast: '花丸スケジュール',
+
+    view_setori: 'セトリを見る',
+    sort_ascend: '↑昇順',
+    sort_descend: '↓降順',
+
+    search_stream: '全ての配信を検索',
+    search_stream_count: function(n) { return `${n} 件`; },
+    search_single: '全てのシングルを検索',
+    search_single_count: function(n) { return `${n} 件`; },
+    search_song: '曲を検索',
+    search_song_count: function(n) { return `${n} 件`; },
+
+    //Urls.
+    force_bilibili: false,
+}
