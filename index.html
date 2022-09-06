@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>花丸はれるSCレコーダー</title>
+    <style>
+        #control-panel {
+            margin-bottom: 1em;
+        }
+
+        /* SC color config */
+        .sc-0 .sc-header {
+            background-color: #125aac;
+            color: #fff;
+        }
+        .sc-0 .sc-content {
+            background-color: #1565c0;
+            color: #fff;
+        }
+
+        .sc-1 .sc-header {
+            background-color: rgb(0, 184, 212);
+            color: #000;
+        }
+        .sc-1 .sc-content {
+            background-color: rgb(0, 229, 255);
+            color: #000;
+        }
+
+        .sc-2 .sc-header {
+            background-color: rgb(0, 191, 165);
+            color: #000;
+        }
+        .sc-2 .sc-content {
+            background-color: rgb(29, 233, 182);
+            color: #000;
+        }
+
+        .sc-3 .sc-header {
+            background-color: rgb(255, 179, 0);
+            color: #000;
+        }
+        .sc-3 .sc-content {
+            background-color: rgb(255, 202, 40);
+            color: #000;
+        }
+
+        .sc-4 .sc-header {
+            background-color: rgb(230, 81, 0);
+            color: #fff;
+        }
+        .sc-4 .sc-content {
+            background-color: rgb(245, 124, 0);
+            color: #fff;
+        }
+
+        .sc-5 .sc-header {
+            background-color: rgb(194, 24, 91);
+            color: #fff;
+        }
+        .sc-5 .sc-content {
+            background-color: rgb(233, 30, 99);
+            color: #fff;
+        }
+
+        .sc-6 .sc-header {
+            background-color: rgb(208, 0, 0);
+            color: #fff;
+        }
+        .sc-6 .sc-content {
+            background-color: rgb(230, 33, 23);
+            color: #fff;
+        }
+
+        .sc-message {
+            border-radius: 4px;
+            margin-bottom: 1em;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 2px 2px 0 rgba(0,0,0,0.14),0 1px 5px 0 rgba(0,0,0,0.12),0 3px 1px -2px rgba(0,0,0,0.2);
+        }
+
+        .sc-header {
+            position: relative;
+            font-weight: 500;
+            padding: 8px 16px;
+            min-height: 20px;
+            border-top-left-radius: 4px;
+            border-top-right-radius: 4px;
+        }
+
+        .sc-name {
+            opacity: 0.7;
+        }
+
+        .sc-amount {
+            font-weight: 500;
+            font-family: Roboto, Arial, sans-serif;
+        }
+
+        .sc-content {
+            padding: 8px 16px;
+            word-wrap: break-word;
+            word-break: break-word;
+            border-bottom-left-radius: 4px;
+            border-bottom-right-radius: 4px;
+        }
+    </style>
+    <script type="text/javascript" src="decode.js"></script>
+</head>
+<body>
+<h1>花丸はれる配信ルームSCレコーダー</h1>
+<div id="control-panel">
+    <button type="button" onclick="sc_clear_record()">現在の記録を削除</button>
+</div>
+<div id="error-message"></div>
+<div id="sc-area"></div>
+<script type="text/javascript">
+    let sys_message = document.getElementById('error-message');
+    let sc_area = document.getElementById('sc-area');
+    const sc_history_key = 'hnmr_sc_record';
+    let history_info = [];
+
+    function sc_date_to_str(cn_timestamp) {
+        let tz_detect = new Date();
+        //Convert the Shanghai time to local time.
+        let tz_stamp = (tz_detect.getTimezoneOffset() + 480) * 60;
+        let target_time = new Date((cn_timestamp - tz_stamp) * 1e3);
+        // Format the time.
+        function formatNumber (n) {
+            n = n.toString();
+            return n[1] ? n : '0' + n;
+        }
+
+        return formatNumber(target_time.getFullYear()) + '-' +
+            formatNumber(target_time.getMonth() + 1) + '-' +
+            formatNumber(target_time.getDate()) + ' ' +
+            formatNumber(target_time.getHours()) + ':' +
+            formatNumber(target_time.getMinutes()) + ':' +
+            formatNumber(target_time.getSeconds());
+    }
+
+    function sc_clear_record() {
+        //Clear the history info.
+        history_info = [];
+        //Flush the local storage.
+        window.localStorage.setItem(sc_history_key, JSON.stringify(history_info));
+        //Clear the HTML codes of the table.
+        sc_area.innerHTML = '';
+    }
+
+    function sc_create_message(name, price_text, content, color_level) {
+        // Construct the content body.
+        let html_content = (content.length === 0) ? '' : ['<div class="sc-content">', content, '</div>'].join('');
+        // Construct the div body.
+        return [
+            '<div class="sc-message '+color_level+'">',
+            '<div class="sc-header">',
+                '<div class="sc-name">'+name+'</div>',
+                '<div class="sc-amount">'+price_text+'</div>',
+            '</div>',
+            html_content,
+        '</div>'].join('');
+    }
+
+    function sc_encode(name, price_text, content, color_level) {
+        return {'n': name, 'p': price_text, 'c': content, 'l': color_level};
+    }
+
+    function sc_insert_record(name, price_text, content, color_level) {
+        //Save the data to history info.
+        history_info.push(sc_encode(name, price_text, content, color_level));
+        //Flush the history info to local storage.
+        window.localStorage.setItem(sc_history_key, JSON.stringify(history_info));
+    }
+
+    function sc_insert(name, price_text, content, color_level) {
+        // Generate the SC div.
+        let sc_html = sc_create_message(name, price_text, content, color_level);
+        // Push to the end of the history info.
+        sc_insert_record(name, price_text, content, color_level);
+        // Insert the SC content to the beginning of the div.
+        let sc_element = document.createElement('div');
+        sc_element.innerHTML = sc_html;
+        sc_area.insertBefore(sc_element.firstChild, sc_area.childNodes[0]);
+    }
+
+    function sc_restore_info() {
+        if(!window.localStorage) {
+            sys_message.innerText = "Your web browser does not support local storage.";
+            return;
+        }
+        // Load the data from the local storage.
+        let sc_history = window.localStorage.getItem(sc_history_key);
+        if(sc_history === null) {
+            //Ignore the null data.
+            return;
+        }
+        //Parse the SC data table.
+        history_info = JSON.parse(sc_history);
+        //Reverse it.
+        let render_history = history_info.reverse();
+        let inner_sc_area = [];
+        for(let i=0; i<render_history.length; ++i) {
+            const sc_data = render_history[i];
+            inner_sc_area.push(sc_create_message(sc_data['n'], sc_data['p'], sc_data['c'], sc_data['l']));
+        }
+        sc_area.innerHTML = inner_sc_area.join('\n');
+    }
+
+    function wss_bilibili(room_id) {
+        let ws_heartbeat;
+        let ws = new WebSocket("wss://broadcastlv.chat.bilibili.com:443/sub");
+        ws.onopen = function(e) {
+            //When communication start, send the certification message.
+            let certification = { "uid": 0, "roomid": room_id, "protover": 3, "platform": "web", "type": 2, "key": ""};
+
+            function getCertification(json) {
+                let encoder = new TextEncoder();
+                let jsonView = encoder.encode(json);
+                let buff = new ArrayBuffer(jsonView.byteLength + 16);
+                let view = new DataView(buff);
+                view.setUint32(0, jsonView.byteLength + 16);
+                view.setUint16(4, 16); //Header length
+                view.setUint16(6, 1); //Protocol
+                view.setUint32(8, 7); //Enter the chat room
+                view.setUint32(12, 1); //Fixed 1
+                for(let r = 0; r < jsonView.byteLength; r++){
+                    view.setUint8(16 + r, jsonView[r]);
+                }
+                return buff;
+            }
+            //Start certification.
+            ws.send(getCertification(JSON.stringify(certification)));
+            //Set heartbeat package timer.
+            ws_heartbeat = setInterval( function() {
+                let buff = new ArrayBuffer(16);
+                let i = new DataView(buff);
+                i.setUint32(0, 0);
+                i.setUint16(4, 16);
+                i.setUint16(6, 1);
+                i.setUint32(8, 2);
+                i.setUint32(12, 1);
+                ws.send(buff);
+            }, 30000); // = 30seconds.
+        };
+
+        ws.onmessage = function(e) {
+            // When receive package, extract the data.
+            let blob = e.data;
+            // Parse the data.
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                let buff = e.target.result;
+                let decoder = new TextDecoder();
+                let view = new DataView(buff);
+                let offset = 0, packet = {}, result = [];
+                while (offset < buff.byteLength) {
+                    const packetLen = view.getUint32(offset);
+                    const headLen = view.getUint16(offset + 4);
+                    const packetVer = view.getUint16(offset + 6);
+                    const packetType = view.getUint32(offset + 8);
+                    const num = view.getUint32(12);
+                    if (packetVer === 3) {
+                        // Decompress the data.
+                        let BrotliDecode = makeBrotliDecode();
+                        let buffFromBr = BrotliDecode(new Uint8Array(buff, offset + headLen, packetLen - headLen));
+                        let buff_view = new DataView(buffFromBr.buffer);
+                        let offset_Ver3 = 0;
+                        while (offset_Ver3 < buffFromBr.byteLength) {
+                            //Parse the header.
+                            packet.Len = buff_view.getUint32(offset_Ver3);
+                            packet.HeadLen = buff_view.getUint16(offset_Ver3 + 4);
+                            packet.Ver = buff_view.getUint16(offset_Ver3 + 6);
+                            packet.Type = buff_view.getUint32(offset_Ver3 + 8);
+                            packet.Num = buff_view.getUint32(12);
+                            //Decode the body.
+                            let dataArray = new Uint8Array(buffFromBr.buffer, offset_Ver3 + packet.HeadLen, packet.Len - packet.HeadLen);
+                            packet.body = decoder.decode(dataArray);
+                            //Save the packet, jump to next pos.
+                            result.push(JSON.stringify(packet));
+                            offset_Ver3 += packet.Len;
+                        }
+                    } else {
+                        packet.Len = packetLen;
+                        packet.HeadLen = headLen;
+                        packet.Ver = packetVer;
+                        packet.Type = packetType;
+                        packet.Num = num;
+                        let dataArray = new Uint8Array(buff, offset + headLen, packetLen - headLen);
+                        if (packetType === 3) {
+                            packet.body = (new DataView(buff, offset + headLen, packetLen - headLen)).getUint32(0);
+                        } else {
+                            packet.body = decoder.decode(dataArray);
+                        }
+                        result.push(JSON.stringify(packet));
+                    }
+                    offset += packetLen;
+                }
+                // Find the SC information in the result.
+                for(let i=0; i<result.length; i++) {
+                    let json = JSON.parse(result[i]);
+                    if (json.Type === 5) {
+                        // Parse the information.
+                        let data_pack = JSON.parse(json.body);
+                        // When matching SC or SC_JPN header, request to handle it.
+                        const data_cmd = data_pack.cmd;
+                        // Another is SUPER_CHAT_MESSAGE, however they could come with different data, so we only watch
+                        // for JPN pack, as it already has all the data we need.
+                        if(data_cmd === "SUPER_CHAT_MESSAGE_JPN") {
+                            //Extract the information we need, send the request.
+                            let sc_info = data_pack.data;
+                            //Construct the data as expected.
+                            let sc_content = sc_info.message;
+                            let sc_jp_content = sc_info.message_jpn;
+                            if(sc_jp_content.length > 0) {
+                                sc_content += '<br><br>自動翻訳：' + sc_info.message_jpn;
+                            }
+                            //Get the username.
+                            let sc_user = sc_info.user_info.uname;
+                            //Construct the price.
+                            let sc_price = sc_info.price;
+                            let sc_price_text = "RMB￥" + String(sc_price) + " (" + sc_date_to_str(sc_info.start_time) + ")";
+                            //Based on the price decide the level.
+                            let sc_level = 'sc-0';
+                            if(sc_price >= 2000) {
+                                sc_level = 'sc-6';
+                            } else if(sc_price >= 1000) {
+                                sc_level = 'sc-5';
+                            } else if(sc_price >= 500) {
+                                sc_level = 'sc-4';
+                            } else if(sc_price >= 100) {
+                                sc_level = 'sc-3';
+                            } else if(sc_price >= 50) {
+                                sc_level = 'sc-2';
+                            } else if(sc_price >= 30) {
+                                sc_level = 'sc-1';
+                            }
+                            //Insert the content.
+                            sc_insert(sc_user, sc_price_text, sc_content, sc_level);
+                        }
+                    }
+                }
+            };
+            //Start reading buffer.
+            reader.readAsArrayBuffer(blob);
+        }
+
+        ws.onclose = function(e){
+            if (ws_heartbeat != null){
+                clearInterval(ws_heartbeat);    //Stop heartbeat.
+            }
+            setTimeout(webSocket, 4000);    //Retry after 4 seconds.
+        }
+
+        ws.onerror = function(e){
+            //TODO: Show the error in the system message.
+            console.log(e);
+        }
+    }
+
+    function listen_bilibili(room_id) {
+        //Start local storage.
+        if("WebSocket" in window) {
+            //Start the websocket listening.
+            wss_bilibili(room_id);
+        } else {
+            //Show the error message.
+            sys_message.innerText = "Your web browser does not support WebSocket.";
+        }
+    }
+
+    // Restore the previous SC data.
+    sc_restore_info();
+    // Start listening live room.
+    listen_bilibili(21547895);
+
+</script>
+</body>
+</html>
