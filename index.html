@@ -109,8 +109,7 @@
     <script type="text/javascript" src="decode.js"></script>
 </head>
 <body>
-<!--<h1>花丸はれる配信ルームSCレコーダー</h1>-->
-<h1>Test mode</h1>
+<h1>花丸はれる配信ルームSCレコーダー</h1>
 
 <div id="control-panel">
     <div><button type="button" onclick="sc_clear_record()">現在の記録を削除</button>&nbsp;ボタン「現在の記録を削除」が押されるまで、このページのSCレコードは自動的に削除されません。</div>
@@ -124,10 +123,7 @@
     let history_info = [];
 
     function sc_date_to_str(cn_timestamp) {
-        let tz_detect = new Date();
-        //Convert the Shanghai time to local time.
-        let tz_stamp = (tz_detect.getTimezoneOffset() + 480) * 60;
-        let target_time = new Date((cn_timestamp - tz_stamp) * 1e3);
+        let target_time = new Date(cn_timestamp * 1000);
         // Format the time.
         function formatNumber (n) {
             n = n.toString();
@@ -170,20 +166,30 @@
     }
 
     function sc_insert_record(name, price_text, content, color_level) {
+        //Check whether the candidate is the same as the last one.
+        if(history_info.length > 0) {
+            const last_item = history_info[history_info.length - 1];
+            if(last_item.n === name && last_item.p === price_text && last_item.c === content && last_item.l === color_level) {
+                //Ignore the same SC in short time.
+                return false;
+            }
+        }
         //Save the data to history info.
         history_info.push(sc_encode(name, price_text, content, color_level));
         //Flush the history info to local storage.
         window.localStorage.setItem(sc_history_key, JSON.stringify(history_info));
+        return true;
     }
 
     function sc_insert(name, price_text, content, color_level) {
         // Generate the SC div.
-        let sc_html = sc_create_message(name, price_text, content, color_level);
         // Push to the end of the history info.
-        sc_insert_record(name, price_text, content, color_level);
+        if(!sc_insert_record(name, price_text, content, color_level)) {
+            return;
+        }
         // Insert the SC content to the beginning of the div.
         let sc_element = document.createElement('div');
-        sc_element.innerHTML = sc_html;
+        sc_element.innerHTML = sc_create_message(name, price_text, content, color_level);
         sc_area.insertBefore(sc_element.firstChild, sc_area.childNodes[0]);
     }
 
@@ -201,10 +207,9 @@
         //Parse the SC data table.
         history_info = JSON.parse(sc_history);
         //Reverse it.
-        let render_history = history_info.reverse();
         let inner_sc_area = [];
-        for(let i=0; i<render_history.length; ++i) {
-            const sc_data = render_history[i];
+        for(let i=history_info.length - 1; i>-1; --i) {
+            const sc_data = history_info[i];
             inner_sc_area.push(sc_create_message(sc_data['n'], sc_data['p'], sc_data['c'], sc_data['l']));
         }
         sc_area.innerHTML = inner_sc_area.join('\n');
@@ -234,6 +239,7 @@
             }
             //Start certification.
             ws.send(getCertification(JSON.stringify(certification)));
+            console.log('Listening ' + room_id + '...');
             //Set heartbeat package timer.
             ws_heartbeat = setInterval( function() {
                 let buff = new ArrayBuffer(16);
@@ -375,7 +381,7 @@
     // Restore the previous SC data.
     sc_restore_info();
     // Start listening live room.
-    listen_bilibili(8725120);
+    listen_bilibili(21547895);
 
 </script>
 </body>
