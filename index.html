@@ -109,8 +109,8 @@
     <script type="text/javascript" src="decode.js"></script>
 </head>
 <body>
-<h1>花丸はれる配信ルームSCレコーダー Beta</h1>
-
+<h1>花丸はれる配信ルームSCレコーダー</h1>
+<div>質問/ご連絡 ▶ Saki Tojo&lt;<a href="mailto:saki.tojo@gmail.com">saki.tojo@gmail.com</a>&gt;</div>
 <div id="control-panel">
     <div><button type="button" onclick="sc_clear_record()">現在の記録を削除</button>&nbsp;ボタン「現在の記録を削除」が押されるまで、このページのSCレコードは自動的に削除されません。</div>
 </div>
@@ -169,7 +169,16 @@
         //Check whether the candidate is the same as the last one.
         if(history_info.length > 0) {
             const last_item = history_info[history_info.length - 1];
-            if(last_item.n === name && last_item.p === price_text && last_item.c === content && last_item.l === color_level) {
+            if(last_item.n === name && last_item.p === price_text && last_item.l === color_level) {
+                // Check whether we can update the content.
+                if (last_item.c.length < content.length) {
+                    // Update the last item.
+                    console.log('Last item updated triggered!');
+                    history_info[history_info.length - 1].c = content;
+                    //Flush the history info to local storage.
+                    window.localStorage.setItem(sc_history_key, JSON.stringify(history_info));
+                    return true;
+                }
                 //Ignore the same SC in short time.
                 return false;
             }
@@ -183,8 +192,17 @@
 
     function sc_insert(name, price_text, content, color_level) {
         // Generate the SC div.
+        const last_sc_length = history_info.length;
         // Push to the end of the history info.
         if(!sc_insert_record(name, price_text, content, color_level)) {
+            return;
+        }
+        //Check whether the length is changed or not.
+        if(last_sc_length === history_info.length) {
+            console.log('Arrived here?!');
+            //Just update the latest child node.
+            let sc_latest_item = sc_area.firstElementChild;
+            sc_latest_item.children[1].innerHTML = content;
             return;
         }
         // Insert the SC content to the beginning of the div.
@@ -213,6 +231,31 @@
             inner_sc_area.push(sc_create_message(sc_data['n'], sc_data['p'], sc_data['c'], sc_data['l']));
         }
         sc_area.innerHTML = inner_sc_area.join('\n');
+    }
+
+    function bilibili_pack(username, sc_price, sc_time, content, content_jp) {
+        let sc_content = content;
+        if(content_jp.length > 0) {
+            sc_content += '<br><br>自動翻訳：' + content_jp;
+        }
+        //Construct the SC price text.
+        let sc_price_text = "RMB￥" + String(sc_price) + " (" + sc_date_to_str(sc_time) + ")";
+        //Based on the price decide the level.
+        let sc_level = 'sc-0';
+        if(sc_price >= 2000) {
+            sc_level = 'sc-6';
+        } else if(sc_price >= 1000) {
+            sc_level = 'sc-5';
+        } else if(sc_price >= 500) {
+            sc_level = 'sc-4';
+        } else if(sc_price >= 100) {
+            sc_level = 'sc-3';
+        } else if(sc_price >= 50) {
+            sc_level = 'sc-2';
+        } else if(sc_price >= 30) {
+            sc_level = 'sc-1';
+        }
+        return {uname: username, price: sc_price_text, content: sc_content, level: sc_level}
     }
 
     function wss_bilibili(room_id) {
@@ -313,39 +356,22 @@
                         let data_pack = JSON.parse(json.body);
                         // When matching SC or SC_JPN header, request to handle it.
                         const data_cmd = data_pack.cmd;
+                        // console.log(data_cmd, data_pack);
                         // Another is SUPER_CHAT_MESSAGE, however they could come with different data, so we only watch
                         // for JPN pack, as it already has all the data we need.
-                        if(data_cmd === "SUPER_CHAT_MESSAGE_JPN") {
+                        if(data_cmd === "SUPER_CHAT_MESSAGE") {
                             //Extract the information we need, send the request.
-                            let sc_info = data_pack.data;
+                            const sc_info = data_pack.data;
                             //Construct the data as expected.
-                            let sc_content = sc_info.message;
-                            let sc_jp_content = sc_info.message_jpn;
-                            if(sc_jp_content.length > 0) {
-                                sc_content += '<br><br>自動翻訳：' + sc_info.message_jpn;
-                            }
-                            //Get the username.
-                            let sc_user = sc_info.user_info.uname;
-                            //Construct the price.
-                            let sc_price = sc_info.price;
-                            let sc_price_text = "RMB￥" + String(sc_price) + " (" + sc_date_to_str(sc_info.start_time) + ")";
-                            //Based on the price decide the level.
-                            let sc_level = 'sc-0';
-                            if(sc_price >= 2000) {
-                                sc_level = 'sc-6';
-                            } else if(sc_price >= 1000) {
-                                sc_level = 'sc-5';
-                            } else if(sc_price >= 500) {
-                                sc_level = 'sc-4';
-                            } else if(sc_price >= 100) {
-                                sc_level = 'sc-3';
-                            } else if(sc_price >= 50) {
-                                sc_level = 'sc-2';
-                            } else if(sc_price >= 30) {
-                                sc_level = 'sc-1';
-                            }
+                            const msg_pack = bilibili_pack(sc_info.user_info.uname, sc_info.price, sc_info.start_time, sc_info.message, sc_info.message_trans);
                             //Insert the content.
-                            sc_insert(sc_user, sc_price_text, sc_content, sc_level);
+                            sc_insert(msg_pack.uname, msg_pack.price, msg_pack.content, msg_pack.level);
+                        } else if(data_cmd === "SUPER_CHAT_MESSAGE_JPN") {
+                            const sc_info = data_pack.data;
+                            //Extract the information we need, send the request.
+                            const msg_pack = bilibili_pack(sc_info.user_info.uname, sc_info.price, sc_info.start_time, sc_info.message, sc_info.message_jpn);
+                            //Insert the content.
+                            sc_insert(msg_pack.uname, msg_pack.price, msg_pack.content, msg_pack.level);
                         }
                     }
                 }
@@ -358,7 +384,7 @@
             if (ws_heartbeat != null){
                 clearInterval(ws_heartbeat);    //Stop heartbeat.
             }
-            setTimeout(webSocket, 4000);    //Retry after 4 seconds.
+            setTimeout(ws, 4000);    //Retry after 4 seconds.
         }
 
         ws.onerror = function(e){
@@ -381,6 +407,7 @@
     // Restore the previous SC data.
     sc_restore_info();
     // Start listening live room.
+    // Hanamaru's room.
     listen_bilibili(21547895);
 
 </script>
